@@ -1,0 +1,18 @@
+{
+  "diagnosis": "The aggregate does not yet support a specific skill diagnosis; demonstrate one basic navigation routine and collect another class window.",
+  "confidence": "low",
+  "evidence": [
+    "The strongest available aggregate signal is below the threshold for a focused recommendation.",
+    "Only 6 anonymous session summaries are in this window."
+  ],
+  "demo": {
+    "duration_min": 5,
+    "setup": "Project a browser window with one familiar classroom link and the Downloads folder ready.",
+    "steps": [
+      "Show how to open the class link, return to the tab, and use the back button once.",
+      "Say aloud what each step changes on screen before doing it.",
+      "Have students predict the next screen after each navigation action."
+    ],
+    "check": "Ask for a thumbs-up only after students can name what the back button will do before you press it."
+  }
+}

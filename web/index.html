@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ColdOpen | Monday demo</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main>
+      <header>
+        <p class="eyebrow">COLDOPEN / CLASS-LEVEL SIGNALS</p>
+        <h1>What should I demo on Monday?</h1>
+        <p class="lede">Aggregate interaction patterns become a five-minute classroom demo. No student profiles. No content collection.</p>
+      </header>
+      <section class="controls" aria-label="Class data selection">
+        <label>Class ID <input id="class-id" value="demo-novice-class" autocomplete="off"></label>
+        <label>Window <input id="window" value="2026-09-08/2026-09-12" autocomplete="off"></label>
+        <button id="load" type="button">Load fixture</button>
+      </section>
+      <p id="status" role="status">Loading the committed demo fixture…</p>
+      <section id="feature-card" class="card hidden" aria-live="polite">
+        <div class="card-heading"><div><p class="eyebrow">CLASS SNAPSHOT</p><h2 id="class-title"></h2></div><span id="confidence" class="badge"></span></div>
+        <p id="confidence-note" class="muted"></p>
+        <dl id="signals"></dl>
+        <button id="generate" type="button">Regenerate live</button>
+      </section>
+      <section id="script-card" class="card hidden" aria-live="polite">
+        <p class="eyebrow">FIVE-MINUTE DEMO</p>
+        <h2 id="diagnosis"></h2>
+        <p id="script-confidence" class="muted"></p>
+        <p id="script-source" class="muted"></p>
+        <h3>Why this surfaced</h3><ul id="evidence"></ul>
+        <h3>Set up</h3><p id="setup"></p>
+        <h3>Run it</h3><ol id="steps"></ol>
+        <h3>Quick check</h3><p id="check"></p>
+      </section>
+      <aside>Demo data is synthetic/self-recorded. ColdOpen aggregates before durable storage and cannot inspect page text, filenames, form values, screenshots, or key identity.</aside>
+    </main>
+    <!-- STATIC_FIXTURE_PAYLOAD -->
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "diagnosis": "This class may need a clearer mental model of where files go and how a file picker works.",
+  "confidence": "medium",
+  "evidence": [
+    "56% of observed file-dialog interactions ended without a selection.",
+    "The class produced 6 anonymous session summaries; this is a class-level pattern, not a student record."
+  ],
+  "demo": {
+    "duration_min": 5,
+    "setup": "Project a blank document and open the Save As dialog before students arrive.",
+    "steps": [
+      "Say: a file has both a name and a home; Downloads is one possible home, not the computer itself.",
+      "Save one sample file to Downloads, then use the left-side locations to save a second copy in a class folder.",
+      "Close the dialog, reopen it, and point out how the location shown tells you where the file will appear later.",
+      "Ask students to predict where each sample will be before you open the folder to check."
+    ],
+    "check": "Have the class tell you which location to choose to find each sample file, then open that location together."
+  }
+}
