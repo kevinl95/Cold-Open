@@ -1,7 +1,6 @@
 const $ = (selector) => document.querySelector(selector);
 const fixtures = window.COLDOPEN_FIXTURES ?? {};
 let currentFeature;
-let currentScript;
 const fixtureNames = {
   "8AM-class": "8AM class",
   "2PM-class": "2PM class"
@@ -37,7 +36,6 @@ function renderFeature(feature) {
   $("#feature-card").classList.remove("hidden");
 }
 function renderScript(script, source) {
-  currentScript = script;
   $("#diagnosis").textContent = script.diagnosis;
   $("#script-confidence").textContent = `${script.confidence} confidence · designed for five minutes`;
   $("#script-source").textContent = source;
@@ -76,7 +74,6 @@ async function loadSelectedClass() {
     const feature = payload.classes?.find((candidate) => candidate.class_id === classId && candidate.window === window);
     if (!response.ok || !feature) throw new Error("No temporary aggregate exists for this class and week yet.");
     renderFeature(feature);
-    currentScript = null;
     $("#script-card").classList.add("hidden");
     setStatus("Temporary aggregate loaded. Generate a fresh recommendation to use the model.");
   } catch (error) { setStatus(error.message, true); }
@@ -118,17 +115,16 @@ async function regenerate() {
     renderScript(script, "Generated live");
     setStatus("New recommendation loaded.");
   } catch (error) {
-    const fallback = currentScript ? " The current recommendation is still shown." : "";
-    setStatus(`${error.message}${fallback}`, true);
+    setStatus(error.message, true);
   } finally { button.disabled = false; }
 }
 
-$("#load").addEventListener("click", loadSelectedClass);
 $("#class-id").addEventListener("change", () => {
   const window = selectedOption()?.dataset.window;
   if (window) $("#window").value = window;
   void loadSelectedClass();
 });
+$("#window").addEventListener("change", () => { void loadSelectedClass(); });
 $("#generate").addEventListener("click", regenerate);
 loadSelectedClass();
 void discoverLiveClasses();

@@ -21,7 +21,6 @@
           </select>
         </label>
         <label>Week <input id="window" value="2026-09-08/2026-09-12" autocomplete="off"></label>
-        <button id="load" type="button">Show recommendation</button>
       </section>
       <p id="status" role="status">Loading the committed demo fixture…</p>
       <p id="live-classes-status" class="muted" aria-live="polite"></p>
@@ -30,7 +29,7 @@
         <p id="confidence-note" class="muted"></p>
         <dl id="signals"></dl>
         <button id="generate" type="button" aria-describedby="generate-description">Generate a fresh recommendation</button>
-        <p id="generate-description" class="action-note">Uses the configured OpenAI model. The current fixture stays on screen if the request fails.</p>
+        <p id="generate-description" class="action-note">Creates a new five-minute recommendation from this class’s aggregate activity.</p>
       </section>
       <section id="script-card" class="card hidden" aria-live="polite">
         <p class="section-label">Five-minute demo</p>

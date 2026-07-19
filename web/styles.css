@@ -63,7 +63,7 @@ h3 {
 
 .controls {
   display: grid;
-  grid-template-columns: 1fr 1.25fr auto;
+  grid-template-columns: 1fr 1.25fr;
   gap: 12px;
   align-items: end;
   margin: 24px 0 0;
