@@ -55,14 +55,14 @@ function loadFixture() {
   try {
     const fixture = currentFixture();
     renderFeature(fixture.feature);
-    renderScript(fixture.script, "Committed fixture script — shown without a generator request.");
-    setStatus("Fixture class and script loaded instantly. Regenerate live to demonstrate the model pipeline.");
+    renderScript(fixture.script, "Fixture script · available immediately");
+    setStatus("Recommendation loaded.");
   } catch (error) { setStatus(error.message, true); }
 }
 async function regenerate() {
   if (!currentFeature) return;
   const button = $("#generate"); button.disabled = true;
-  setStatus("Calling the live server-side generator…");
+  setStatus("Generating a new recommendation…");
   try {
     const response = await fetch("/api/generate", {
       method: "POST",
@@ -71,11 +71,11 @@ async function regenerate() {
     });
     const script = await response.json();
     if (!response.ok) throw new Error(script.error || "Unable to regenerate the demo");
-    renderScript(script, "Live model response — generated server-side just now.");
-    setStatus("Live generator response loaded.");
+    renderScript(script, "Generated live");
+    setStatus("New recommendation loaded.");
   } catch (error) {
     // Do not clear currentScript: the committed fixture stays available during a demo outage.
-    setStatus(`${error.message} The committed fixture script remains on screen.`, true);
+    setStatus(`${error.message} The fixture recommendation is still shown.`, true);
   } finally { button.disabled = false; }
 }
 

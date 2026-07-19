@@ -1,65 +1,83 @@
 # ColdOpen
 
-ColdOpen turns privacy-safe, class-level interaction aggregates into a five-minute
-teacher demo. It is a local Build Week prototype, not a district deployment or a
-compliance claim.
+ColdOpen is a hackathon demo that turns a class-level interaction summary into a
+five-minute teacher demo. It ships with two fixture classes, so the main experience
+works even when the model API is unavailable.
 
-## Deploy the generator to Cloudflare Pages
-
-The deployed product is static-first: the page embeds committed aggregate-only fixture
-vectors and scripts at build time, so the initial recommendation never waits on a
-model or a database. `Regenerate live` posts that aggregate vector to the Pages
-Function at `/api/generate`; the function is the sole OpenAI caller.
-
-1. Push this repository to GitHub or GitLab. In Cloudflare, open **Workers & Pages**,
-   choose **Create application → Pages → Connect to Git**, and select the repository.
-2. Use the repository root, choose the **None** framework preset, set the production
-   branch, build command to `npm run build:pages`, and build output directory to
-   `dist-pages`.
-3. Finish the first deployment. Git integration then deploys every push to the
-   production branch and creates preview deployments for other branches.
-4. Open the Pages project’s **Settings → Environment variables**. Add
-   `OPENAI_API_KEY` as an encrypted secret for both Production and Preview. Optionally
-   add `OPENAI_MODEL` (the default is `gpt-4.1-mini`) in the same environments.
-5. Open the deployed URL. The fixture script is already rendered. Click
-   **Regenerate live** to make the server-side model call.
-
-Do not put the key in a frontend `.env` file, the extension, or a commit. The only
-production key read is `context.env.OPENAI_API_KEY` in
-[`functions/api/generate.ts`](functions/api/generate.ts); the browser sends only the
-validated class-level feature vector to that route. Cloudflare maps that file to
-`/api/generate` and `_routes.json` restricts Function invocation to `/api/*`.
-
-## Run the local video setup
+## Try it locally
 
 ```bash
 npm install
+npm start
+```
+
+Open http://localhost:3000. The default class, `demo-novice-class`, loads a committed
+script immediately. Try `demo-competent-class` to see the comparison fixture.
+
+The **Regenerate live** button is for the deployed Pages app. Locally, the committed
+fixture remains the reliable demo path.
+
+Run the checks with:
+
+```bash
+npm test
+```
+
+## Deploy to Cloudflare Pages
+
+1. Push the repository to GitHub or GitLab.
+2. In Cloudflare, go to **Workers & Pages** → **Create application** → **Pages** →
+   **Connect to Git**. Select this repository.
+3. Use these build settings:
+
+   | Setting | Value |
+   | --- | --- |
+   | Framework preset | None |
+   | Build command | `npm run build:pages` |
+   | Build output directory | `dist-pages` |
+   | Root directory | repository root |
+
+4. After the first deploy, open **Settings** → **Environment variables** and add
+   `OPENAI_API_KEY` as an encrypted secret in both Production and Preview. You can
+   also set `OPENAI_MODEL`; it defaults to `gpt-4.1-mini`.
+5. Open the Pages URL. The fixture recommendation appears immediately. Click
+   **Regenerate live** to call the model.
+
+Cloudflare deploys pushes to the production branch automatically and creates preview
+deployments for other branches.
+
+## How the live call works
+
+The browser sends the current class-level feature vector to `POST /api/generate`.
+[`functions/api/generate.ts`](functions/api/generate.ts) validates it, reads the key
+from Cloudflare’s server-side environment, calls OpenAI, and returns the same demo
+script shape used by the page.
+
+The key is not included in the page, fixture files, or extension. Do not add it to a
+frontend environment file or commit it to the repository.
+
+If the live call fails, the page keeps showing the already loaded fixture script. That
+is intentional: use the fixture for the demo, then use **Regenerate live** to show the
+real integration.
+
+## Extension video setup
+
+The extension is local-only and is not deployed with the Pages site.
+
+```bash
 npm run seed:novice
 npm start
 ```
 
-Open `http://localhost:3000`. The page uses its committed static fixtures; the local
-aggregate server remains available only to support the unpacked extension demo.
+Then open `chrome://extensions`, turn on **Developer mode**, choose **Load unpacked**,
+and select the repository’s `extension/` directory. Its endpoint is localhost-only.
 
-To show the extension in the video, open `chrome://extensions`, enable **Developer
-mode**, choose **Load unpacked**, and select this repository’s `extension/` directory.
-It is intentionally localhost-only and is never part of the Pages deployment. The
-seeded sample is intentionally novice-like; use `npm run seed:competent` to load a
-lower-signal local aggregate comparison.
+## Data and privacy
 
-The local setup is deliberately static-only. `Regenerate live` is enabled by the
-deployed Pages Function after its environment secret is configured; a live-call failure
-there leaves the already rendered static script untouched.
+The deployed site contains only class-level fixture vectors and fixture scripts. It
+does not include the local aggregate store, raw trace fixtures, extension, accounts,
+or authentication.
 
-## Privacy boundary
-
-The MV3 extension transmits a session summary only, never raw events. The local server
-stores class/window aggregate counters and distributions; it discards the ephemeral
-session ID after merging. The content script neither reads page text, DOM values,
-filenames, URLs, key identity, nor screenshots. Its localhost-only manifest is a
-prototype configuration, not a managed-Chromebook deployment path.
-
-The browser cannot identify a native file dialog without inspecting a page element,
-which this design forbids. Consequently, live extension telemetry emits general
-event-shape signals only; dialog signals in the synthetic fixture demonstrate the
-aggregate/generation contract for a future consented training surface.
+The local extension records interaction timing and event shape only. It does not read
+page text, form values, filenames, URLs, screenshots, or key identity. The local
+server merges session summaries into class aggregates and does not retain session IDs.
