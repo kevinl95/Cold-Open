@@ -1,21 +1,30 @@
 # ColdOpen
 
-ColdOpen is a hackathon demo that turns a class-level interaction summary into a
-five-minute teacher demo. It ships with two fixture classes, so the main experience
-works even when the model API is unavailable.
+ColdOpen turns aggregate class interaction patterns into a short, teacher-led
+recommendation. The teacher page starts with two built-in sample classes and can
+generate a new five-minute recommendation with OpenAI. An unpacked Chrome extension
+can also send aggregate-only summaries into the prototype flow.
 
-## Try it locally
+## What is included
+
+- A teacher-facing page with sample classes: **8AM class** and **2PM class**.
+- A Cloudflare Pages Function that generates structured recommendations server-side.
+- An unpacked Chrome extension that sends aggregate session summaries to a configured
+  endpoint.
+- A temporary Pages receiver and class list for testing the full extension-to-page
+  flow without introducing a database or accounts.
+
+## Run locally
 
 ```bash
 npm install
 npm start
 ```
 
-Open http://localhost:3000. The default class, **8AM class**, loads a committed
-script immediately. Try **2PM class** to see the comparison fixture.
-
-**Generate a fresh recommendation** is for the deployed Pages app. Locally, the
-committed fixture remains the reliable demo path.
+Open http://localhost:3000. The 8AM class loads immediately. Choose 2PM class to
+view the second sample. Choosing a class or changing the week updates the page;
+**Generate a fresh recommendation** runs the model-backed version when it is
+available.
 
 Run the checks with:
 
@@ -26,9 +35,9 @@ npm test
 ## Deploy to Cloudflare Pages
 
 1. Push the repository to GitHub or GitLab.
-2. In Cloudflare, go to **Workers & Pages** → **Create application** → **Pages** →
-   **Connect to Git**. Select this repository.
-3. Use these build settings:
+2. In Cloudflare, select **Workers & Pages** → **Create application** → **Pages** →
+   **Connect to Git**, then select this repository.
+3. Configure the build:
 
    | Setting | Value |
    | --- | --- |
@@ -37,80 +46,58 @@ npm test
    | Build output directory | `dist-pages` |
    | Root directory | repository root |
 
-4. After the first deploy, open **Settings** → **Environment variables** and add
-   `OPENAI_API_KEY` as an encrypted secret in both Production and Preview. You can
-   also set `OPENAI_MODEL`; it defaults to `gpt-4.1-mini`.
-5. Open the Pages URL. The fixture recommendation appears immediately. Click
-   **Generate a fresh recommendation** to call the model.
+4. After the first deployment, go to **Settings** → **Environment variables**.
+   Add `OPENAI_API_KEY` as an encrypted secret in Production and Preview. Optionally
+   set `OPENAI_MODEL`; otherwise ColdOpen uses `gpt-4.1-mini`.
+5. Push to the production branch to deploy updates. Other branches receive preview
+   deployments.
 
-Cloudflare deploys pushes to the production branch automatically and creates preview
-deployments for other branches.
+The OpenAI key is read only by
+[`functions/api/generate.ts`](functions/api/generate.ts) in the Pages runtime. It is
+not included in the frontend, sample files, or extension.
 
-## How the live call works
+## Connect the extension
 
-The browser sends the current class-level feature vector to `POST /api/generate`.
-[`functions/api/generate.ts`](functions/api/generate.ts) validates it, reads the key
-from Cloudflare’s server-side environment, calls OpenAI, and returns the same demo
-script shape used by the page.
+The extension is loaded unpacked and is not published or deployed with the Pages
+site.
 
-The key is not included in the page, fixture files, or extension. Do not add it to a
-frontend environment file or commit it to the repository.
+1. Open `chrome://extensions`, enable **Developer mode**, and choose **Load
+   unpacked**.
+2. Select this repository’s `extension/` directory.
+3. Open the extension’s **Details** page, then choose **Extension options**.
+4. Enter your Pages summary endpoint, for example:
+   `https://your-project.pages.dev/api/class-summaries`
+5. Enter an opaque class ID such as `period-3`, then save and approve Chrome’s
+   request to use that endpoint.
 
-If the live call fails, the page keeps showing the already loaded fixture script. That
-is intentional: use the fixture for the demo, then use **Generate a fresh
-recommendation** to show the real integration.
+The extension sends one aggregate summary after 30 observed events or 90 seconds.
+Reload the teacher page after a summary is delivered; the temporary class appears in
+the Class menu. Selecting it loads its aggregate and sets the matching week.
 
-## Extension-to-page prototype path
-
-The extension can now send its aggregate-only session summaries to a Pages project,
-and the teacher page will list the resulting temporary class. This is useful for a
-live walkthrough of the full path:
-
-```
-unpacked extension → POST /api/class-summaries → temporary class aggregate
-→ teacher-page class list → POST /api/generate
-```
-
-It deliberately has **no database and no auth**. The Pages Functions keep the class
-aggregate only in runtime memory. A cold start, deploy, or request handled by a
-different Cloudflare runtime may make it disappear. Do not use this endpoint for
-real data collection; the receiver is public and the data is not durable.
-
-After deploying this version, reload the unpacked extension. In Chrome, open its
-**Details** page, choose **Extension options**, and enter:
-
-| Setting | Example |
-| --- | --- |
-| Summary endpoint | `https://your-project.pages.dev/api/class-summaries` |
-| Class ID | `period-3` |
-
-Saving asks Chrome to allow that one endpoint. The setting stores only the endpoint
-and opaque class ID—not interaction data. Use the extension on its local test page
-until it flushes (after 30 events or 90 seconds), then reload the Pages teacher page.
-The temporary class appears in the Class menu and selecting it switches the week to
-the one sent by the extension. Click **Generate a fresh recommendation** to complete
-the model portion of the walkthrough.
-
-## Extension video setup
-
-The extension is local-only and is not deployed with the Pages site.
+For a local-only extension walkthrough, start the local server first:
 
 ```bash
 npm run seed:novice
 npm start
 ```
 
-Then open `chrome://extensions`, turn on **Developer mode**, choose **Load unpacked**,
-and select the repository’s `extension/` directory. For the deployed prototype,
-configure the endpoint through **Details** → **Extension options** as described above.
+## How the prototype data flow works
 
-## Data and privacy
+```
+extension → POST /api/class-summaries → class aggregate
+teacher page → GET /api/classes → selected class feature vector
+teacher page → POST /api/generate → structured recommendation
+```
 
-The deployed site contains class-level fixture vectors and scripts, plus the
-temporary runtime-only aggregate bridge described above. It does not include a
-database, raw trace fixtures, accounts, or authentication.
+Only class-level aggregates are used by the recommendation endpoint. The extension
+records event timing and event shape; it does not read page text, form values,
+filenames, URLs, screenshots, or key identity. Session IDs and raw events are not
+retained in class aggregates.
 
-The extension records interaction timing and event shape only. It does not read page
-text, form values, filenames, URLs, screenshots, or key identity. Both the local
-server and temporary Pages bridge merge session summaries into class aggregates and do
-not retain session IDs.
+## Current prototype limits
+
+The deployed summary receiver has no database or authentication. It keeps aggregate
+state in Cloudflare Function runtime memory, so a deploy, cold start, or another
+runtime can clear it. Treat the extension-to-page connection as a working integration
+prototype, not a durable data service. The built-in sample classes remain available
+independently of that temporary state.
