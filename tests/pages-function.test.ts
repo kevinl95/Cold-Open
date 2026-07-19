@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { onRequestPost } from "../functions/api/generate.js";
 
 const feature = {
-  class_id: "demo-novice-class", n_sessions: 6, window: "2026-09-08/2026-09-12", confidence: "medium" as const,
+  class_id: "8AM-class", n_sessions: 6, window: "2026-09-08/2026-09-12", confidence: "medium" as const,
   signals: { drag_abandon_rate: 0.43, dead_end_dialog_rate: 0.56, dialog_cycle_rate: 0.48, median_hesitation_ms: 3700, median_key_interval_ms: 590, focus_change_rate: 0.11 }
 };
 

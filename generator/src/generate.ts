@@ -69,6 +69,7 @@ function modelInstructions(): string {
     "You generate a teacher-run five-minute classroom demo from aggregate, privacy-preserving interaction statistics.",
     "Never infer anything about an individual child, disability, motivation, home life, identity, or content they worked on.",
     "Calibrate claims with may/might and the supplied confidence. Explain the strongest aggregates in plain language.",
+    "Keep each field concise: diagnosis and evidence under two sentences; setup, each step, and check under three sentences.",
     "Return only JSON matching the supplied schema."
   ].join(" ");
 }
@@ -138,18 +139,18 @@ export async function generateDemo(feature: ClassFeatureVector, options: Generat
               additionalProperties: false,
               required: ["diagnosis", "confidence", "evidence", "demo"],
               properties: {
-                diagnosis: { type: "string" },
+                diagnosis: { type: "string", description: "A concise, cautious class-level diagnosis." },
                 confidence: { type: "string", enum: ["low", "medium", "high"] },
-                evidence: { type: "array", minItems: 1, maxItems: 3, items: { type: "string" } },
+                evidence: { type: "array", minItems: 1, maxItems: 3, items: { type: "string", description: "One concise aggregate-only observation." } },
                 demo: {
                   type: "object",
                   additionalProperties: false,
                   required: ["duration_min", "setup", "steps", "check"],
                   properties: {
                     duration_min: { type: "integer", enum: [5] },
-                    setup: { type: "string" },
-                    steps: { type: "array", minItems: 2, maxItems: 6, items: { type: "string" } },
-                    check: { type: "string" }
+                    setup: { type: "string", description: "Brief teacher preparation." },
+                    steps: { type: "array", minItems: 2, maxItems: 6, items: { type: "string", description: "One concise teacher action." } },
+                    check: { type: "string", description: "A brief whole-class check for understanding." }
                   }
                 }
               }

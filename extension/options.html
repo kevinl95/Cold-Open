@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ColdOpen extension settings</title>
+    <link rel="stylesheet" href="options.css">
+  </head>
+  <body>
+    <main>
+      <h1>ColdOpen settings</h1>
+      <p>These settings decide where aggregate-only class summaries are sent. No interaction events, session IDs, or retry history are stored here.</p>
+      <form id="settings">
+        <label>
+          Summary endpoint
+          <input id="endpoint" type="url" required spellcheck="false" placeholder="https://your-project.pages.dev/api/class-summaries">
+        </label>
+        <p class="help">For this prototype, use your Pages URL followed by <code>/api/class-summaries</code>.</p>
+        <label>
+          Class ID
+          <input id="class-id" required pattern="[A-Za-z0-9_-]{3,128}" spellcheck="false" placeholder="period-3">
+        </label>
+        <p class="help">Use 3–128 letters, numbers, hyphens, or underscores. This is an opaque label, not a student identifier.</p>
+        <button type="submit">Save settings</button>
+        <p id="status" role="status"></p>
+      </form>
+    </main>
+    <script type="module" src="options.js"></script>
+  </body>
+</html>

@@ -14,11 +14,17 @@
         <p class="lede">A five-minute demo based on this class’s activity this week.</p>
       </header>
       <section class="controls" aria-label="Class data selection">
-        <label>Class <input id="class-id" value="demo-novice-class" autocomplete="off"></label>
+        <label>Class
+          <select id="class-id">
+            <option value="8AM-class" data-window="2026-09-08/2026-09-12">8AM class</option>
+            <option value="2PM-class" data-window="2026-09-08/2026-09-12">2PM class</option>
+          </select>
+        </label>
         <label>Week <input id="window" value="2026-09-08/2026-09-12" autocomplete="off"></label>
         <button id="load" type="button">Show recommendation</button>
       </section>
       <p id="status" role="status">Loading the committed demo fixture…</p>
+      <p id="live-classes-status" class="muted" aria-live="polite"></p>
       <section id="feature-card" class="card hidden" aria-live="polite">
         <div class="card-heading"><div><p class="section-label">Class activity</p><h2 id="class-title"></h2></div><span id="confidence" class="badge"></span></div>
         <p id="confidence-note" class="muted"></p>

@@ -48,6 +48,9 @@ const server = createServer(async (request, response) => {
     const url = new URL(request.url ?? "/", `http://${request.headers.host ?? "localhost"}`);
     const classMatch = url.pathname.match(/^\/api\/classes\/([A-Za-z0-9_-]+)\/(features|demo)$/);
     if (request.method === "GET" && url.pathname === "/api/health") return sendJson(response, 200, { ok: true });
+    if (request.method === "GET" && url.pathname === "/api/classes") {
+      return sendJson(response, 200, { classes: await store.list(), storage: "local" });
+    }
     if (request.method === "POST" && url.pathname === "/api/class-summaries") {
       const feature = await store.merge(sessionSummarySchema.parse(await readJson(request)));
       return sendJson(response, 201, feature);

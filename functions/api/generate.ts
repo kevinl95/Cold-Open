@@ -1,6 +1,7 @@
 import { ZodError } from "zod";
 import { generateDemo } from "../../generator/src/generate.js";
 import { classFeatureVectorSchema } from "../../shared/contracts.js";
+import { corsHeaders } from "../_lib/http.js";
 
 interface Environment {
   OPENAI_API_KEY?: string;
@@ -15,7 +16,7 @@ interface PagesContext<Env> {
 function json(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" }
+    headers: { "Content-Type": "application/json; charset=utf-8", ...corsHeaders() }
   });
 }
 
@@ -61,4 +62,8 @@ export async function onRequestPost(context: PagesContext<Environment>): Promise
     console.error("ColdOpen live generation failed", error);
     return json(502, { error: publicGenerationError(error) });
   }
+}
+
+export function onRequestOptions(): Response {
+  return new Response(null, { status: 204, headers: corsHeaders() });
 }

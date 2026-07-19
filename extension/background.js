@@ -1,10 +1,25 @@
-// Session state is service-worker memory only. Chrome storage is deliberately unused.
-const ENDPOINT = "http://localhost:3000/api/class-summaries";
-const CLASS_ID = "demo-extension-class"; // Replace at build/deployment time with an opaque class ID.
+// Interaction state is service-worker memory only. Storage holds delivery settings,
+// never telemetry, events, session IDs, or retry queues.
+const DEFAULT_CONFIG = {
+  endpoint: "http://localhost:3000/api/class-summaries",
+  classId: "my-demo-class"
+};
 const EVENT_TYPES = new Set(["click", "drag_start", "drag_abandon", "drag_complete", "dialog_open", "dialog_close_noop", "key_interval", "scroll", "focus_change"]);
 let sessionId = crypto.randomUUID();
 let events = [];
 let flushTimer;
+let config = { ...DEFAULT_CONFIG };
+
+const configurationReady = chrome.storage.sync.get(DEFAULT_CONFIG).then((stored) => {
+  config = { ...DEFAULT_CONFIG, ...stored };
+});
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== "sync") return;
+  for (const key of Object.keys(DEFAULT_CONFIG)) {
+    if (changes[key]) config[key] = changes[key].newValue;
+  }
+});
 
 function isoDate(date) { return date.toISOString().slice(0, 10); }
 function currentWindow() {
@@ -22,7 +37,7 @@ function summarize() {
   const dialogOpens = count("dialog_open");
   return {
     session_id: sessionId,
-    class_id: CLASS_ID,
+    class_id: config.classId,
     window: currentWindow(),
     event_count: events.length,
     drag_starts: count("drag_start"),
@@ -38,11 +53,13 @@ function summarize() {
 
 async function flush() {
   if (!events.length) return;
+  await configurationReady;
   const summary = summarize();
   events = [];
   sessionId = crypto.randomUUID();
   try {
-    await fetch(ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(summary) });
+    const response = await fetch(config.endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(summary) });
+    if (!response.ok) throw new Error(`Endpoint returned ${response.status}`);
   } catch (error) {
     // Never persist a retry queue: it would turn anonymous timing into a durable per-device record.
     console.warn("ColdOpen aggregate summary was not delivered", error);

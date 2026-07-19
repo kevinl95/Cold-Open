@@ -77,7 +77,8 @@ label {
   gap: 6px;
 }
 
-input {
+input,
+select {
   appearance: none;
   background: #fff;
   border: 1px solid #bdc1c6;
@@ -88,7 +89,10 @@ input {
   padding: 8px 10px;
 }
 
-input:focus {
+select { cursor: pointer; }
+
+input:focus,
+select:focus {
   border-color: #1a73e8;
   box-shadow: 0 0 0 1px #1a73e8;
   outline: 0;

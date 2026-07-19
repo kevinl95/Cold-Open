@@ -78,14 +78,17 @@ export const classFeatureVectorSchema = z.object({
 export type ClassFeatureVector = z.infer<typeof classFeatureVectorSchema>;
 
 export const demoScriptSchema = z.object({
-  diagnosis: z.string().min(10).max(240),
+  // The Responses structured-output subset guarantees the object shape, enums,
+  // and array cardinality, but not string length. Keep this validator aligned
+  // with the schema actually sent to the model; the page safely renders text.
+  diagnosis: z.string().trim().min(1).max(2_000),
   confidence: confidenceSchema,
-  evidence: z.array(z.string().min(8).max(240)).min(1).max(3),
+  evidence: z.array(z.string().trim().min(1).max(2_000)).min(1).max(3),
   demo: z.object({
     duration_min: z.literal(5),
-    setup: z.string().min(8).max(500),
-    steps: z.array(z.string().min(8).max(500)).min(2).max(6),
-    check: z.string().min(8).max(500)
+    setup: z.string().trim().min(1).max(4_000),
+    steps: z.array(z.string().trim().min(1).max(4_000)).min(2).max(6),
+    check: z.string().trim().min(1).max(4_000)
   }).strict()
 }).strict();
 

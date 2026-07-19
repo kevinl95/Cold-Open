@@ -49,6 +49,13 @@ export class AggregateStore {
     return aggregate ? featureVector(aggregate) : null;
   }
 
+  async list(): Promise<ClassFeatureVector[]> {
+    await this.load();
+    return this.data.aggregates
+      .map(featureVector)
+      .sort((left, right) => left.class_id.localeCompare(right.class_id));
+  }
+
   async reset(): Promise<void> {
     this.loaded = true;
     this.data = { aggregates: [] };
