@@ -23,7 +23,8 @@
         <div class="card-heading"><div><p class="section-label">Class activity</p><h2 id="class-title"></h2></div><span id="confidence" class="badge"></span></div>
         <p id="confidence-note" class="muted"></p>
         <dl id="signals"></dl>
-        <button id="generate" type="button">Regenerate live</button>
+        <button id="generate" type="button" aria-describedby="generate-description">Generate a fresh recommendation</button>
+        <p id="generate-description" class="action-note">Uses the configured OpenAI model. The current fixture stays on screen if the request fails.</p>
       </section>
       <section id="script-card" class="card hidden" aria-live="polite">
         <p class="section-label">Five-minute demo</p>

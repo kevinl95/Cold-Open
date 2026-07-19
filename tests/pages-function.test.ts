@@ -45,3 +45,16 @@ test("Pages Function rejects non-aggregate input before calling the model", asyn
   });
   assert.equal(response.status, 400);
 });
+
+test("Pages Function gives the page a useful, non-secret API-key error", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify({ error: { message: "Incorrect API key provided: sk-should-not-be-exposed" } }), { status: 401 });
+  try {
+    const response = await onRequestPost({
+      request: new Request("https://example.pages.dev/api/generate", { method: "POST", body: JSON.stringify(feature) }),
+      env: { OPENAI_API_KEY: "server-only-test-key" }
+    });
+    assert.equal(response.status, 502);
+    assert.deepEqual(await response.json(), { error: "OpenAI rejected the server’s API key. Check OPENAI_API_KEY in Cloudflare." });
+  } finally { globalThis.fetch = originalFetch; }
+});

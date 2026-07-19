@@ -19,6 +19,14 @@ function json(status: number, body: unknown): Response {
   });
 }
 
+function publicGenerationError(error: unknown): string {
+  const message = error instanceof Error ? error.message : "";
+  if (message.includes("(401)")) return "OpenAI rejected the server’s API key. Check OPENAI_API_KEY in Cloudflare.";
+  if (message.includes("(429)")) return "OpenAI is rate limiting this project. Try again in a moment.";
+  if (message.includes("(400)")) return "OpenAI rejected the generation request. Check the model setting or Function logs.";
+  return "Could not reach OpenAI right now. Try again in a moment.";
+}
+
 /**
  * Cloudflare Pages file-based route: POST /api/generate.
  *
@@ -41,6 +49,6 @@ export async function onRequestPost(context: PagesContext<Environment>): Promise
   } catch (error) {
     if (error instanceof ZodError) return json(400, { error: "Invalid class-level feature vector." });
     console.error("ColdOpen live generation failed", error);
-    return json(502, { error: "Live generation is temporarily unavailable. The fixture script is still available." });
+    return json(502, { error: publicGenerationError(error) });
   }
 }

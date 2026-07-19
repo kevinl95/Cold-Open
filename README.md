@@ -14,8 +14,8 @@ npm start
 Open http://localhost:3000. The default class, `demo-novice-class`, loads a committed
 script immediately. Try `demo-competent-class` to see the comparison fixture.
 
-The **Regenerate live** button is for the deployed Pages app. Locally, the committed
-fixture remains the reliable demo path.
+**Generate a fresh recommendation** is for the deployed Pages app. Locally, the
+committed fixture remains the reliable demo path.
 
 Run the checks with:
 
@@ -41,7 +41,7 @@ npm test
    `OPENAI_API_KEY` as an encrypted secret in both Production and Preview. You can
    also set `OPENAI_MODEL`; it defaults to `gpt-4.1-mini`.
 5. Open the Pages URL. The fixture recommendation appears immediately. Click
-   **Regenerate live** to call the model.
+   **Generate a fresh recommendation** to call the model.
 
 Cloudflare deploys pushes to the production branch automatically and creates preview
 deployments for other branches.
@@ -57,8 +57,8 @@ The key is not included in the page, fixture files, or extension. Do not add it 
 frontend environment file or commit it to the repository.
 
 If the live call fails, the page keeps showing the already loaded fixture script. That
-is intentional: use the fixture for the demo, then use **Regenerate live** to show the
-real integration.
+is intentional: use the fixture for the demo, then use **Generate a fresh
+recommendation** to show the real integration.
 
 ## Extension video setup
 

@@ -83,6 +83,15 @@ function responseText(payload: unknown): string | null {
   return null;
 }
 
+async function openAIError(response: Response): Promise<Error> {
+  let detail = "";
+  try {
+    const payload = await response.json() as { error?: { message?: unknown } };
+    if (typeof payload.error?.message === "string") detail = payload.error.message;
+  } catch { /* An empty or non-JSON response is still useful by status code. */ }
+  return new Error(`OpenAI request failed (${response.status})${detail ? `: ${detail}` : ""}`);
+}
+
 export interface GenerateDemoOptions {
   /** Supplied by the server runtime; never accepted from a browser request. */
   apiKey?: string;
@@ -134,7 +143,7 @@ export async function generateDemo(feature: ClassFeatureVector, options: Generat
                   additionalProperties: false,
                   required: ["duration_min", "setup", "steps", "check"],
                   properties: {
-                    duration_min: { type: "integer", const: 5 },
+                    duration_min: { type: "integer", enum: [5] },
                     setup: { type: "string" },
                     steps: { type: "array", items: { type: "string" } },
                     check: { type: "string" }
@@ -146,7 +155,7 @@ export async function generateDemo(feature: ClassFeatureVector, options: Generat
         }
       })
     });
-    if (!response.ok) throw new Error(`OpenAI response ${response.status}`);
+    if (!response.ok) throw await openAIError(response);
     const text = responseText(await response.json());
     if (!text) throw new Error("No structured text in OpenAI response");
     return demoScriptSchema.parse(JSON.parse(text));

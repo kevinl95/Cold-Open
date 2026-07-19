@@ -62,7 +62,7 @@ function loadFixture() {
 async function regenerate() {
   if (!currentFeature) return;
   const button = $("#generate"); button.disabled = true;
-  setStatus("Generating a new recommendation…");
+  setStatus("Generating a fresh recommendation with OpenAI…");
   try {
     const response = await fetch("/api/generate", {
       method: "POST",
