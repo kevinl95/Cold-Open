@@ -85,11 +85,14 @@ function responseText(payload: unknown): string | null {
 
 async function openAIError(response: Response): Promise<Error> {
   let detail = "";
+  let code = "";
   try {
-    const payload = await response.json() as { error?: { message?: unknown } };
+    const payload = await response.json() as { error?: { message?: unknown; code?: unknown; type?: unknown } };
     if (typeof payload.error?.message === "string") detail = payload.error.message;
+    if (typeof payload.error?.code === "string") code = payload.error.code;
+    else if (typeof payload.error?.type === "string") code = payload.error.type;
   } catch { /* An empty or non-JSON response is still useful by status code. */ }
-  return new Error(`OpenAI request failed (${response.status})${detail ? `: ${detail}` : ""}`);
+  return new Error(`OpenAI request failed (${response.status})${code ? ` [${code}]` : ""}${detail ? `: ${detail}` : ""}`);
 }
 
 export interface GenerateDemoOptions {

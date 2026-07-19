@@ -58,3 +58,16 @@ test("Pages Function gives the page a useful, non-secret API-key error", async (
     assert.deepEqual(await response.json(), { error: "OpenAI rejected the server’s API key. Check OPENAI_API_KEY in Cloudflare." });
   } finally { globalThis.fetch = originalFetch; }
 });
+
+test("Pages Function distinguishes an API budget error from a short rate limit", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify({ error: { code: "insufficient_quota", message: "You exceeded your current quota." } }), { status: 429 });
+  try {
+    const response = await onRequestPost({
+      request: new Request("https://example.pages.dev/api/generate", { method: "POST", body: JSON.stringify(feature) }),
+      env: { OPENAI_API_KEY: "server-only-test-key" }
+    });
+    assert.equal(response.status, 502);
+    assert.deepEqual(await response.json(), { error: "This OpenAI project has no available API budget. Check API billing, credits, and the project spend limit." });
+  } finally { globalThis.fetch = originalFetch; }
+});

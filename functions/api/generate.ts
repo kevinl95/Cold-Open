@@ -21,6 +21,9 @@ function json(status: number, body: unknown): Response {
 
 function publicGenerationError(error: unknown): string {
   const message = error instanceof Error ? error.message : "";
+  if (message.includes("insufficient_quota") || message.includes("billing_hard_limit_reached")) {
+    return "This OpenAI project has no available API budget. Check API billing, credits, and the project spend limit.";
+  }
   if (message.includes("(401)")) return "OpenAI rejected the server’s API key. Check OPENAI_API_KEY in Cloudflare.";
   if (message.includes("(429)")) return "OpenAI is rate limiting this project. Try again in a moment.";
   if (message.includes("(400)")) return "OpenAI rejected the generation request. Check the model setting or Function logs.";
