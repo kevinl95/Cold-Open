@@ -20,6 +20,7 @@ function json(status: number, body: unknown): Response {
 }
 
 function publicGenerationError(error: unknown): string {
+  if (error instanceof ZodError) return "OpenAI returned a script that did not match the expected format. The fixture recommendation is still available.";
   const message = error instanceof Error ? error.message : "";
   if (message.includes("insufficient_quota") || message.includes("billing_hard_limit_reached")) {
     return "This OpenAI project has no available API budget. Check API billing, credits, and the project spend limit.";
@@ -41,8 +42,15 @@ export async function onRequestPost(context: PagesContext<Environment>): Promise
     return json(500, { error: "Live generation is not configured." });
   }
 
+  let feature;
   try {
-    const feature = classFeatureVectorSchema.parse(await context.request.json());
+    feature = classFeatureVectorSchema.parse(await context.request.json());
+  } catch (error) {
+    if (error instanceof ZodError) return json(400, { error: "Invalid class-level feature vector." });
+    return json(400, { error: "Invalid JSON request body." });
+  }
+
+  try {
     const script = await generateDemo(feature, {
       apiKey: context.env.OPENAI_API_KEY,
       model: context.env.OPENAI_MODEL,
@@ -50,7 +58,6 @@ export async function onRequestPost(context: PagesContext<Environment>): Promise
     });
     return json(200, script);
   } catch (error) {
-    if (error instanceof ZodError) return json(400, { error: "Invalid class-level feature vector." });
     console.error("ColdOpen live generation failed", error);
     return json(502, { error: publicGenerationError(error) });
   }

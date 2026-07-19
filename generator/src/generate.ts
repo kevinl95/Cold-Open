@@ -140,7 +140,7 @@ export async function generateDemo(feature: ClassFeatureVector, options: Generat
               properties: {
                 diagnosis: { type: "string" },
                 confidence: { type: "string", enum: ["low", "medium", "high"] },
-                evidence: { type: "array", items: { type: "string" } },
+                evidence: { type: "array", minItems: 1, maxItems: 3, items: { type: "string" } },
                 demo: {
                   type: "object",
                   additionalProperties: false,
@@ -148,7 +148,7 @@ export async function generateDemo(feature: ClassFeatureVector, options: Generat
                   properties: {
                     duration_min: { type: "integer", enum: [5] },
                     setup: { type: "string" },
-                    steps: { type: "array", items: { type: "string" } },
+                    steps: { type: "array", minItems: 2, maxItems: 6, items: { type: "string" } },
                     check: { type: "string" }
                   }
                 }

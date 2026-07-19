@@ -46,6 +46,19 @@ test("Pages Function rejects non-aggregate input before calling the model", asyn
   assert.equal(response.status, 400);
 });
 
+test("Pages Function reports a malformed model response as a generation failure, not bad input", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify({ output_text: JSON.stringify({ diagnosis: "Too short", confidence: "medium", evidence: [], demo: {} }) }), { status: 200 });
+  try {
+    const response = await onRequestPost({
+      request: new Request("https://example.pages.dev/api/generate", { method: "POST", body: JSON.stringify(feature) }),
+      env: { OPENAI_API_KEY: "server-only-test-key" }
+    });
+    assert.equal(response.status, 502);
+    assert.deepEqual(await response.json(), { error: "OpenAI returned a script that did not match the expected format. The fixture recommendation is still available." });
+  } finally { globalThis.fetch = originalFetch; }
+});
+
 test("Pages Function gives the page a useful, non-secret API-key error", async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () => new Response(JSON.stringify({ error: { message: "Incorrect API key provided: sk-should-not-be-exposed" } }), { status: 401 });
