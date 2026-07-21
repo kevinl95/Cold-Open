@@ -114,7 +114,7 @@ function localEnvironment(): { apiKey?: string; model?: string } {
 export async function generateDemo(feature: ClassFeatureVector, options: GenerateDemoOptions = {}): Promise<DemoScript> {
   const local = localEnvironment();
   const apiKey = options.apiKey ?? local.apiKey;
-  const model = options.model ?? local.model ?? "gpt-4.1-mini";
+  const model = options.model ?? local.model ?? "gpt-5.6";
   const request = options.request ?? fetch;
   const fallbackOnError = options.fallbackOnError ?? true;
   if (!apiKey) {

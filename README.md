@@ -28,7 +28,7 @@ teacher page → POST /api/generate → structured five-minute demo script
 
 The extension emits timing events (hesitation before clicks, abandoned drags, file dialogs dismissed without a selection, keystroke intervals) from an explicit allow-list of capture sites. The rollup produces a class feature vector. One server-side model call turns that vector into a structured recommendation: diagnosis, plain-language evidence, setup, steps, and a comprehension check. If the model call fails or returns invalid JSON, a deterministic fallback keeps the teacher's page working.
 
-The classroom device does almost nothing, by design. The Chromebooks this is built for are base-model, years-old, 4GB machines that Google's built-in AI will never reach and that per-seat SaaS tools price out. One cached model call per class per week puts the cost floor at fractions of a cent per classroom.
+The classroom device does almost nothing, by design. The Chromebooks this is built for are base-model, years-old, 4GB machines that Google's built-in AI will never reach and that per-seat SaaS tools price out. One server-side model call per class per week keeps usage at the class level rather than the per-student level.
 
 ## Run it locally
 
@@ -65,7 +65,7 @@ npm start
    | Build output directory | `dist-pages` |
    | Root directory | repository root |
 
-4. After the first deployment, go to **Settings** → **Environment variables**. Add `OPENAI_API_KEY` as an encrypted secret in Production and Preview. Optionally set `OPENAI_MODEL`; otherwise ColdOpen uses `gpt-4.1-mini`.
+4. After the first deployment, go to **Settings** → **Environment variables**. Add `OPENAI_API_KEY` as an encrypted secret in Production and Preview. ColdOpen uses `gpt-5.6` by default; set `OPENAI_MODEL` only to override that choice.
 5. Push to the production branch to deploy updates. Other branches receive preview deployments.
 
 The key is read only by [`functions/api/generate.ts`](functions/api/generate.ts) in the Pages runtime. It never appears in the frontend, the fixtures, or the extension.
@@ -111,7 +111,7 @@ through privacy boundaries, turn product choices into bounded implementation tas
 and produce and verify changes in the repository. Codex did not replace product
 judgment; the team made the calls about what ColdOpen would collect, deploy, and show.
 The model used by the deployed recommendation endpoint is a separate runtime choice:
-it defaults to `gpt-4.1-mini` and can be changed with `OPENAI_MODEL`.
+it defaults to `gpt-5.6` and can be changed with `OPENAI_MODEL`.
 
 ## Stack
 
