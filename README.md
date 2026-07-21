@@ -3,13 +3,15 @@
 ColdOpen turns aggregate class interaction patterns into a short, teacher-led
 recommendation. The teacher page starts with two built-in sample classes and can
 generate a new five-minute recommendation with OpenAI. An unpacked Chrome extension
-can also send aggregate-only summaries into the prototype flow.
+can also send aggregate-only summaries from teacher-approved capture sites into the
+prototype flow.
 
 ## What is included
 
 - A teacher-facing page with sample classes: **8AM class** and **2PM class**.
 - A Cloudflare Pages Function that generates structured recommendations server-side.
-- An unpacked Chrome extension that sends aggregate session summaries to a configured
+- An unpacked Chrome extension that observes timing-only events on an explicit
+  allow-list of capture sites, then sends aggregate session summaries to a configured
   endpoint.
 - A temporary Pages receiver and class list for testing the full extension-to-page
   flow without introducing a database or accounts.
@@ -72,6 +74,21 @@ site.
    testing, leave it as `http://localhost`.
 6. Enter an opaque class ID such as `period-3`, then save and approve Chrome’s
    request to use the endpoint and selected capture sites.
+
+### Capture-site access
+
+ColdOpen does **not** run on every webpage. **Capture sites** is an allow-list: enter
+one or more complete site origins, separated by commas, and Chrome asks for access to
+each one. For example:
+
+```text
+https://classroom-tool.example, https://practice-tool.example
+```
+
+The extension registers its timing-only listener on those sites and nowhere else.
+When the list changes, it stops listening on the old sites and removes unneeded
+optional site permissions. The summary endpoint is separate: it is where aggregates
+are sent, not where activity is collected.
 
 The extension sends one aggregate summary after 30 observed events or 90 seconds.
 Reload each selected capture site after saving, then reload the teacher page after a
