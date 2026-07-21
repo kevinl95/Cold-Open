@@ -67,12 +67,16 @@ site.
 3. Open the extension’s **Details** page, then choose **Extension options**.
 4. Enter your Pages summary endpoint, for example:
    `https://your-project.pages.dev/api/class-summaries`
-5. Enter an opaque class ID such as `period-3`, then save and approve Chrome’s
-   request to use that endpoint.
+5. Enter the classroom sites ColdOpen may observe, separated by commas. For example:
+   `https://classroom-tool.example, https://practice-tool.example`. For local
+   testing, leave it as `http://localhost`.
+6. Enter an opaque class ID such as `period-3`, then save and approve Chrome’s
+   request to use the endpoint and selected capture sites.
 
 The extension sends one aggregate summary after 30 observed events or 90 seconds.
-Reload the teacher page after a summary is delivered; the temporary class appears in
-the Class menu. Selecting it loads its aggregate and sets the matching week.
+Reload each selected capture site after saving, then reload the teacher page after a
+summary is delivered. The temporary class appears in the Class menu and selecting it
+loads its aggregate and sets the matching week.
 
 For a local-only extension walkthrough, start the local server first:
 
@@ -90,9 +94,9 @@ teacher page → POST /api/generate → structured recommendation
 ```
 
 Only class-level aggregates are used by the recommendation endpoint. The extension
-records event timing and event shape; it does not read page text, form values,
-filenames, URLs, screenshots, or key identity. Session IDs and raw events are not
-retained in class aggregates.
+records event timing and event shape on the configured capture sites; it does not
+read page text, form values, filenames, URLs, screenshots, or key identity. Session
+IDs and raw events are not retained in class aggregates.
 
 ## Current prototype limits
 

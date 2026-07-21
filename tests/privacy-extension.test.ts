@@ -2,12 +2,13 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { access, readFile } from "node:fs/promises";
 
-test("extension keeps telemetry in memory and asks only for a configured delivery endpoint", async () => {
+test("extension keeps telemetry in memory and asks only for configured delivery and capture sites", async () => {
   const manifest = JSON.parse(await readFile("extension/manifest.json", "utf8"));
-  assert.deepEqual(manifest.permissions, ["storage"]);
+  assert.deepEqual(manifest.permissions, ["storage", "scripting"]);
   assert.deepEqual(manifest.host_permissions, ["http://localhost/*"]);
   assert.deepEqual(manifest.optional_host_permissions, ["https://*/*"]);
   assert.equal(manifest.options_ui.page, "options.html");
+  assert.equal(manifest.content_scripts, undefined);
   assert.deepEqual(manifest.icons, {
     "16": "icons/icon-16.png",
     "32": "icons/icon-32.png",
@@ -20,5 +21,7 @@ test("extension keeps telemetry in memory and asks only for a configured deliver
   for (const forbidden of ["querySelector", "textContent", "event.key", "event.code", "chrome.storage"]) assert.doesNotMatch(source, new RegExp(forbidden.replace(".", "\\.")));
   const background = await readFile("extension/background.js", "utf8");
   assert.match(background, /chrome\.storage\.sync/);
+  assert.match(background, /chrome\.scripting\.registerContentScripts/);
+  assert.match(background, /captureOrigins/);
   assert.match(background, /never telemetry, events, session IDs, or retry queues/);
 });

@@ -17,6 +17,11 @@
         </label>
         <p class="help">For this prototype, use your Pages URL followed by <code>/api/class-summaries</code>.</p>
         <label>
+          Capture sites
+          <input id="capture-sites" type="text" required spellcheck="false" placeholder="https://classroom-tool.example, https://practice-tool.example">
+        </label>
+        <p class="help">Separate approved sites with commas. ColdOpen collects timing-only events only on these domains; saving asks Chrome for permission for each one.</p>
+        <label>
           Class ID
           <input id="class-id" required pattern="[A-Za-z0-9_-]{3,128}" spellcheck="false" placeholder="period-3">
         </label>

@@ -2,7 +2,8 @@
 // never telemetry, events, session IDs, or retry queues.
 const DEFAULT_CONFIG = {
   endpoint: "http://localhost:3000/api/class-summaries",
-  classId: "my-demo-class"
+  classId: "my-demo-class",
+  captureOrigins: ["http://localhost/*"]
 };
 const EVENT_TYPES = new Set(["click", "drag_start", "drag_abandon", "drag_complete", "dialog_open", "dialog_close_noop", "key_interval", "scroll", "focus_change"]);
 let sessionId = crypto.randomUUID();
@@ -10,16 +11,57 @@ let events = [];
 let flushTimer;
 let config = { ...DEFAULT_CONFIG };
 
-const configurationReady = chrome.storage.sync.get(DEFAULT_CONFIG).then((stored) => {
-  config = { ...DEFAULT_CONFIG, ...stored };
+function captureOrigins(value, legacyValue) {
+  const values = Array.isArray(value) ? value : typeof legacyValue === "string" ? [legacyValue] : DEFAULT_CONFIG.captureOrigins;
+  const valid = values.filter((item) => typeof item === "string" && /^(https:\/\/[^/]+|http:\/\/localhost)\/\*$/.test(item));
+  return [...new Set(valid.length ? valid : DEFAULT_CONFIG.captureOrigins)];
+}
+
+async function applyCaptureScope() {
+  try {
+    await chrome.scripting.unregisterContentScripts({ ids: ["coldopen-capture"] });
+  } catch {
+    // There is no registered script on a first install or after a manual removal.
+  }
+  try {
+    await chrome.scripting.registerContentScripts([{
+      id: "coldopen-capture",
+      js: ["content.js"],
+      matches: config.captureOrigins,
+      runAt: "document_start",
+      persistAcrossSessions: true
+    }]);
+  } catch (error) {
+    console.warn("ColdOpen could not apply its selected capture sites", error);
+  }
+}
+
+const configurationReady = chrome.storage.sync.get(["endpoint", "classId", "captureOrigins", "captureOrigin"]).then(async (stored) => {
+  config = {
+    endpoint: typeof stored.endpoint === "string" ? stored.endpoint : DEFAULT_CONFIG.endpoint,
+    classId: typeof stored.classId === "string" ? stored.classId : DEFAULT_CONFIG.classId,
+    captureOrigins: captureOrigins(stored.captureOrigins, stored.captureOrigin)
+  };
+  // Preserve a teacher's existing single-site setting when upgrading this prototype.
+  if (!Array.isArray(stored.captureOrigins)) await chrome.storage.sync.set({ captureOrigins: config.captureOrigins });
+  await applyCaptureScope();
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== "sync") return;
-  for (const key of Object.keys(DEFAULT_CONFIG)) {
-    if (changes[key]) config[key] = changes[key].newValue;
+  if (changes.endpoint) config.endpoint = changes.endpoint.newValue;
+  if (changes.classId) config.classId = changes.classId.newValue;
+  const captureScopeChanged = Boolean(changes.captureOrigins || changes.captureOrigin);
+  if (captureScopeChanged) config.captureOrigins = captureOrigins(changes.captureOrigins?.newValue, changes.captureOrigin?.newValue);
+  if (captureScopeChanged) {
+    // Never combine timing collected on previous capture sites with the next set.
+    events = [];
+    sessionId = crypto.randomUUID();
+    void applyCaptureScope();
   }
 });
+
+chrome.runtime.onStartup.addListener(() => { void configurationReady; });
 
 function isoDate(date) { return date.toISOString().slice(0, 10); }
 function currentWindow() {
