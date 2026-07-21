@@ -89,6 +89,30 @@ The extension sends one aggregate summary after 30 observed events or 90 seconds
 
 The deployed summary receiver has no database or authentication by design (see the [non-goals](design-doc.md)). It keeps aggregate state in Cloudflare Function runtime memory, so a deploy or cold start clears it. Treat the extension-to-page connection as a working integration prototype, not a durable data service. The built-in sample classes work independently of that temporary state.
 
+## How we built with Codex
+
+ColdOpen was built through a human-led, Codex-assisted, **spec-driven** workflow.
+[`design-doc.md`](design-doc.md) framed the work before implementation and remained
+the reference point for scope, privacy boundaries, interface contracts, and non-goals.
+The product decisions remained deliberate: focus on a five-minute teacher
+intervention rather than a dashboard, aggregate at class level rather than collect
+student records, keep the extension unpacked, and ship committed fixtures so the
+teacher experience has a reliable starting point.
+
+Codex accelerated the engineering work around those decisions. It translated the
+design document into shared Zod contracts, the extension, aggregation code, Pages
+Functions, fixture build, and tests, then kept changes checked against that spec. It
+also shortened the feedback loop while we iterated on the teacher UI, added the
+teacher-configured capture-site allow-list, and diagnosed live integration issues such
+as feature-vector validation, OpenAI API errors, and structured-output validation.
+
+GPT-5.6 contributed through the Codex development collaboration: it helped reason
+through privacy boundaries, turn product choices into bounded implementation tasks,
+and produce and verify changes in the repository. Codex did not replace product
+judgment; the team made the calls about what ColdOpen would collect, deploy, and show.
+The model used by the deployed recommendation endpoint is a separate runtime choice:
+it defaults to `gpt-4.1-mini` and can be changed with `OPENAI_MODEL`.
+
 ## Stack
 
 TypeScript · MV3 Chrome extension · Cloudflare Pages Functions · OpenAI API · Zod contracts shared across the pipeline · Node test runner
