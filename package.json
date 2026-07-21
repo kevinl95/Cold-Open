@@ -9,14 +9,17 @@
     "test": "npm run build && node --test dist/tests/*.test.js",
     "start": "npm run build:pages && node dist/aggregator/src/server.js",
     "seed:novice": "npm run build && node dist/scripts/seed.js novice-file-management",
-    "seed:competent": "npm run build && node dist/scripts/seed.js competent-file-management"
+    "seed:competent": "npm run build && node dist/scripts/seed.js competent-file-management",
+    "deploy": "wrangler deploy",
+    "preview": "wrangler dev"
   },
   "engines": {
     "node": ">=20"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "wrangler": "^4.112.0"
   },
   "dependencies": {
     "zod": "^3.0.0"
