@@ -1,44 +1,61 @@
 # ColdOpen
 
-ColdOpen turns aggregate class interaction patterns into a short, teacher-led
-recommendation. The teacher page starts with two built-in sample classes and can
-generate a new five-minute recommendation with OpenAI. An unpacked Chrome extension
-can also send aggregate-only summaries from teacher-approved capture sites into the
-prototype flow.
+**Privacy-preserving classroom telemetry that tells a teacher what to demo on Monday.**
 
-## What is included
+Many students in under-resourced districts arrive without basic computer skills. They struggle with mice, typing, and file systems, because their only computer at home was a phone. Teachers can see who is behind but not why, and their only realistic intervention is a five-minute demo at the front of the room. They have no data telling them what to demo, so they guess.
 
-- A teacher-facing page with sample classes: **8AM class** and **2PM class**.
-- A Cloudflare Pages Function that generates structured recommendations server-side.
-- An unpacked Chrome extension that observes timing-only events on an explicit
-  allow-list of capture sites, then sends aggregate session summaries to a configured
-  endpoint.
-- A temporary Pages receiver and class list for testing the full extension-to-page
-  flow without introducing a database or accounts.
+ColdOpen watches *how* a class interacts, never *what* they work on, and turns the aggregate into the one artifact a teacher can use: a five-minute demo script, with the evidence behind it, ready to run cold on Monday morning.
 
-## Run locally
+Built for OpenAI Build Week, spec-first with Codex against [a design document](design-doc.md) whose non-goals mattered more than its goals.
+
+## The privacy claim is enforced, not promised
+
+The extension cannot see content. Not page text, not form values, not filenames, not URLs, not screenshots, not which keys were pressed. This is a structural property of the code:
+
+- The content script observes event **timing and shape** only. The keydown handler uses the event purely as a timing pulse and never reads a property.
+- [`tests/privacy-extension.test.ts`](tests/privacy-extension.test.ts) reads the content script's source and **fails the build** if it ever references DOM selectors, text content, or key identity.
+- Individual sessions collapse into a single class-level feature vector. Identity is discarded at aggregation. There are no per-student records anywhere, because there is nothing per-student to record.
+
+Class-level aggregation is not a privacy compromise. A teacher with 30 students has five minutes per class, not ten minutes per kid, so the class is the grain they can act on. The privacy win comes free with getting the product right.
+
+## How it works
+
+```
+extension → POST /api/class-summaries → class aggregate
+teacher page → GET /api/classes → selected class feature vector
+teacher page → POST /api/generate → structured five-minute demo script
+```
+
+The extension emits timing events (hesitation before clicks, abandoned drags, file dialogs dismissed without a selection, keystroke intervals) from an explicit allow-list of capture sites. The rollup produces a class feature vector. One server-side model call turns that vector into a structured recommendation: diagnosis, plain-language evidence, setup, steps, and a comprehension check. If the model call fails or returns invalid JSON, a deterministic fallback keeps the teacher's page working.
+
+The classroom device does almost nothing, by design. The Chromebooks this is built for are base-model, years-old, 4GB machines that Google's built-in AI will never reach and that per-seat SaaS tools price out. One cached model call per class per week puts the cost floor at fractions of a cent per classroom.
+
+## Run it locally
 
 ```bash
 npm install
 npm start
 ```
 
-Open http://localhost:3000. The 8AM class loads immediately. Choose 2PM class to
-view the second sample. Choosing a class or changing the week updates the page;
-**Generate a fresh recommendation** runs the model-backed version when it is
-available.
+Open http://localhost:3000. The 8AM sample class loads immediately from committed fixtures; choose 2PM class for the second sample. **Generate a fresh recommendation** runs the live model-backed version when a key is configured.
 
-Run the checks with:
+Run the checks, including the privacy invariant:
 
 ```bash
 npm test
 ```
 
+Seed a novice-pattern class for a local extension walkthrough:
+
+```bash
+npm run seed:novice
+npm start
+```
+
 ## Deploy to Cloudflare Pages
 
 1. Push the repository to GitHub or GitLab.
-2. In Cloudflare, select **Workers & Pages** → **Create application** → **Pages** →
-   **Connect to Git**, then select this repository.
+2. In Cloudflare, select **Workers & Pages** → **Create application** → **Pages** → **Connect to Git**, then select this repository.
 3. Configure the build:
 
    | Setting | Value |
@@ -48,77 +65,30 @@ npm test
    | Build output directory | `dist-pages` |
    | Root directory | repository root |
 
-4. After the first deployment, go to **Settings** → **Environment variables**.
-   Add `OPENAI_API_KEY` as an encrypted secret in Production and Preview. Optionally
-   set `OPENAI_MODEL`; otherwise ColdOpen uses `gpt-4.1-mini`.
-5. Push to the production branch to deploy updates. Other branches receive preview
-   deployments.
+4. After the first deployment, go to **Settings** → **Environment variables**. Add `OPENAI_API_KEY` as an encrypted secret in Production and Preview. Optionally set `OPENAI_MODEL`; otherwise ColdOpen uses `gpt-4.1-mini`.
+5. Push to the production branch to deploy updates. Other branches receive preview deployments.
 
-The OpenAI key is read only by
-[`functions/api/generate.ts`](functions/api/generate.ts) in the Pages runtime. It is
-not included in the frontend, sample files, or extension.
+The key is read only by [`functions/api/generate.ts`](functions/api/generate.ts) in the Pages runtime. It never appears in the frontend, the fixtures, or the extension.
 
 ## Connect the extension
 
-The extension is loaded unpacked and is not published or deployed with the Pages
-site.
+The extension loads unpacked and is not published or deployed with the Pages site.
 
-1. Open `chrome://extensions`, enable **Developer mode**, and choose **Load
-   unpacked**.
-2. Select this repository’s `extension/` directory.
-3. Open the extension’s **Details** page, then choose **Extension options**.
-4. Enter your Pages summary endpoint, for example:
-   `https://your-project.pages.dev/api/class-summaries`
-5. Enter the classroom sites ColdOpen may observe, separated by commas. For example:
-   `https://classroom-tool.example, https://practice-tool.example`. For local
-   testing, leave it as `http://localhost`.
-6. Enter an opaque class ID such as `period-3`, then save and approve Chrome’s
-   request to use the endpoint and selected capture sites.
+1. Open `chrome://extensions`, enable **Developer mode**, and choose **Load unpacked**.
+2. Select this repository's `extension/` directory.
+3. Open the extension's **Details** page, then choose **Extension options**.
+4. Enter your Pages summary endpoint, for example: `https://your-project.pages.dev/api/class-summaries`
+5. Enter the classroom sites ColdOpen may observe, separated by commas. For local testing, leave it as `http://localhost`.
+6. Enter an opaque class ID such as `period-3`, then save and approve Chrome's permission requests.
 
-### Capture-site access
+**Capture sites are an allow-list, not a default.** ColdOpen runs nowhere until you name specific site origins, and Chrome asks for access to each one. When the list changes, the extension stops listening on removed sites and drops the permissions it no longer needs. The summary endpoint is separate: it is where aggregates are sent, not where activity is collected.
 
-ColdOpen does **not** run on every webpage. **Capture sites** is an allow-list: enter
-one or more complete site origins, separated by commas, and Chrome asks for access to
-each one. For example:
+The extension sends one aggregate summary after 30 observed events or 90 seconds. Reload the capture site after saving, then reload the teacher page once a summary is delivered; the temporary class appears in the Class menu.
 
-```text
-https://classroom-tool.example, https://practice-tool.example
-```
+## Prototype limits
 
-The extension registers its timing-only listener on those sites and nowhere else.
-When the list changes, it stops listening on the old sites and removes unneeded
-optional site permissions. The summary endpoint is separate: it is where aggregates
-are sent, not where activity is collected.
+The deployed summary receiver has no database or authentication by design (see the [non-goals](design-doc.md)). It keeps aggregate state in Cloudflare Function runtime memory, so a deploy or cold start clears it. Treat the extension-to-page connection as a working integration prototype, not a durable data service. The built-in sample classes work independently of that temporary state.
 
-The extension sends one aggregate summary after 30 observed events or 90 seconds.
-Reload each selected capture site after saving, then reload the teacher page after a
-summary is delivered. The temporary class appears in the Class menu and selecting it
-loads its aggregate and sets the matching week.
+## Stack
 
-For a local-only extension walkthrough, start the local server first:
-
-```bash
-npm run seed:novice
-npm start
-```
-
-## How the prototype data flow works
-
-```
-extension → POST /api/class-summaries → class aggregate
-teacher page → GET /api/classes → selected class feature vector
-teacher page → POST /api/generate → structured recommendation
-```
-
-Only class-level aggregates are used by the recommendation endpoint. The extension
-records event timing and event shape on the configured capture sites; it does not
-read page text, form values, filenames, URLs, screenshots, or key identity. Session
-IDs and raw events are not retained in class aggregates.
-
-## Current prototype limits
-
-The deployed summary receiver has no database or authentication. It keeps aggregate
-state in Cloudflare Function runtime memory, so a deploy, cold start, or another
-runtime can clear it. Treat the extension-to-page connection as a working integration
-prototype, not a durable data service. The built-in sample classes remain available
-independently of that temporary state.
+TypeScript · MV3 Chrome extension · Cloudflare Pages Functions · OpenAI API · Zod contracts shared across the pipeline · Node test runner
